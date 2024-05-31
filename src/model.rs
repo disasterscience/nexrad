@@ -34,10 +34,20 @@ impl DataFile {
 
     /// Scan data grouped by elevation.
     pub fn as_elevation_scans(self) -> Vec<Message31> {
-        self.elevation_scans
+        let mut elevations = self
+            .elevation_scans
             .into_iter()
             .flat_map(|(_, v)| v)
-            .collect()
+            .collect::<Vec<Message31>>();
+
+        elevations.sort_by(|a, b| {
+            a.header
+                .elev
+                .partial_cmp(&b.header.elev)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+
+        elevations
     }
 
     /// Scan data grouped by elevation.
