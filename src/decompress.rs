@@ -21,7 +21,7 @@ pub fn decompress_file(data: &[u8]) -> Result<Vec<u8>> {
     // Start the decompressed data by copying the file header, which is not compressed
     let header_size = std::mem::size_of::<VolumeHeaderRecord>();
     let (header, mut reader) = data.split_at(header_size);
-    decompressed_buffer.extend_from_slice(&header);
+    decompressed_buffer.extend_from_slice(header);
 
     loop {
         // Skip the first 4 bytes of the compressed block, which is the size of the block
@@ -39,7 +39,7 @@ pub fn decompress_file(data: &[u8]) -> Result<Vec<u8>> {
         // Append the decompressed block to the decompressed data
         decompressed_buffer.extend(block_buffer);
 
-        if reader.len() == 0 {
+        if reader.is_empty() {
             break;
         }
     }

@@ -36,7 +36,7 @@ pub fn decode_file(data: &Vec<u8>) -> Result<DataFile> {
 }
 
 fn decode_file_header<R: Read + Seek>(reader: &mut R) -> Result<VolumeHeaderRecord> {
-    Ok(deserialize(reader)?)
+    deserialize(reader)
 }
 
 fn decode_message_31(reader: &mut Cursor<&Vec<u8>>, file: &mut DataFile) -> Result<()> {
@@ -102,8 +102,10 @@ fn decode_message_31(reader: &mut Cursor<&Vec<u8>>, file: &mut DataFile) -> Resu
     }
 
     let elevation_scans = file.elevation_scans_mut();
-    if !elevation_scans.contains_key(&message.header().elev_num()) {
-        elevation_scans.insert(message.header().elev_num(), vec![message]);
+    if let std::collections::hash_map::Entry::Vacant(e) =
+        elevation_scans.entry(message.header().elev_num())
+    {
+        e.insert(vec![message]);
     } else {
         elevation_scans
             .get_mut(&message.header().elev_num())
