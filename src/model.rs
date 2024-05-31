@@ -33,18 +33,24 @@ impl DataFile {
     }
 
     /// Scan data grouped by elevation.
-    pub fn as_elevation_scans(self) -> Vec<Message31> {
+    pub fn as_elevation_scans(self) -> Vec<Vec<Message31>> {
         let mut elevations = self
             .elevation_scans
-            .into_iter()
-            .flat_map(|(_, v)| v)
-            .collect::<Vec<Message31>>();
+            .into_values()
+            .collect::<Vec<Vec<Message31>>>();
 
         elevations.sort_by(|a, b| {
-            a.header
-                .elev
-                .partial_cmp(&b.header.elev)
-                .unwrap_or(std::cmp::Ordering::Equal)
+            let a = a.first();
+            let b = b.first();
+
+            match (a, b) {
+                (Some(a), Some(b)) => a
+                    .header
+                    .elev
+                    .partial_cmp(&b.header.elev)
+                    .unwrap_or(std::cmp::Ordering::Equal),
+                _ => std::cmp::Ordering::Equal,
+            }
         });
 
         elevations
