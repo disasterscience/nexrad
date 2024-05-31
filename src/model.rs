@@ -33,6 +33,14 @@ impl DataFile {
     }
 
     /// Scan data grouped by elevation.
+    pub fn as_elevation_scans(self) -> Vec<Message31> {
+        self.elevation_scans
+            .into_iter()
+            .flat_map(|(_, v)| v)
+            .collect()
+    }
+
+    /// Scan data grouped by elevation.
     pub(crate) fn elevation_scans_mut(&mut self) -> &mut HashMap<u8, Vec<Message31>> {
         &mut self.elevation_scans
     }
