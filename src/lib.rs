@@ -7,9 +7,12 @@ extern crate core;
 
 pub mod decode;
 pub mod decompress;
+pub mod error;
 pub mod file;
 pub mod model;
-pub mod error;
 
 #[cfg(feature = "download")]
 pub mod download;
+
+#[cfg(test)]
+mod test;

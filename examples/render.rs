@@ -10,8 +10,6 @@ use std::env;
 use std::f32::consts::PI;
 use std::fs::File;
 use std::io::{self, Write};
-use std::panic::panic_any;
-use tokio::io::AsyncReadExt;
 
 const IMAGE_SIZE: usize = 1024;
 
@@ -83,7 +81,7 @@ fn render_ppm_image(
     let px_per_km = IMAGE_SIZE / 2 / 460;
 
     let mut elevation_scans: Vec<_> = decoded.elevation_scans().iter().collect();
-    elevation_scans.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+    elevation_scans.sort_by(|a, b| a.0.partial_cmp(b.0).unwrap());
 
     let (_, radials) = elevation_scans[requested_elevation_index];
 
@@ -99,7 +97,7 @@ fn render_ppm_image(
     for radial in radials {
         let mut azimuth_angle = radial.header().azm() - 90.0;
         if azimuth_angle < 0.0 {
-            azimuth_angle = 360.0 + azimuth_angle;
+            azimuth_angle += 360.0;
         }
 
         let azimuth_spacing = radial.header().azm_res() as f32;
