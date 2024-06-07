@@ -48,7 +48,7 @@ fn decode_message_31(reader: &mut Cursor<&Vec<u8>>, file: &mut DataFile) -> Resu
 
     let pointers_space = message.header().data_block_count() as usize * size_of::<u32>();
     let mut pointers_raw = vec![0; pointers_space];
-    reader.read_exact(&mut pointers_raw).unwrap();
+    reader.read_exact(&mut pointers_raw)?;
 
     let data_block_pointers = pointers_raw
         .chunks_exact(size_of::<u32>())
@@ -84,7 +84,7 @@ fn decode_message_31(reader: &mut Cursor<&Vec<u8>>, file: &mut DataFile) -> Resu
                 let generic_data: GenericData = deserialize(reader)?;
 
                 let mut moment_data = vec![0; generic_data.moment_size()];
-                reader.read_exact(&mut moment_data).unwrap();
+                reader.read_exact(&mut moment_data)?;
 
                 let data = DataMoment::new(generic_data, moment_data);
                 match data_block_name.as_str() {

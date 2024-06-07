@@ -27,17 +27,17 @@ impl DataFile {
         &self.volume_header
     }
 
-    /// Scan data grouped by elevation.
+    /// Scan data grouped by elevation number.
     pub fn elevation_scans(&self) -> &BTreeMap<u8, Vec<Message31>> {
         &self.elevation_scans
     }
 
-    /// Scan data grouped by elevation.
+    /// Scan data grouped by elevation number.
     pub fn as_elevation_scans(self) -> BTreeMap<u8, Vec<Message31>> {
         self.elevation_scans
     }
 
-    /// Scan data grouped by elevation.
+    /// Scan data grouped by elevation number.
     pub(crate) fn elevation_scans_mut(&mut self) -> &mut BTreeMap<u8, Vec<Message31>> {
         &mut self.elevation_scans
     }
@@ -291,7 +291,7 @@ impl Message31 {
 
 /// Header for message type 31.
 #[repr(C)]
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Message31Header {
     radar_id: [u8; 4],
     ray_time: u32,
