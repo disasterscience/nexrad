@@ -2,7 +2,7 @@
 //! Struct definitions for decoded NEXRAD Level II data structures.
 //!
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fmt::Debug;
 
 use serde::{Deserialize, Serialize};
@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 /// A decoded NEXRAD WSR-88D data file including sweep data.
 pub struct DataFile {
     volume_header: VolumeHeaderRecord,
-    elevation_scans: HashMap<u8, Vec<Message31>>,
+    elevation_scans: BTreeMap<u8, Vec<Message31>>,
 }
 
 impl DataFile {
@@ -18,7 +18,7 @@ impl DataFile {
     pub(crate) fn new(file_header: VolumeHeaderRecord) -> Self {
         Self {
             volume_header: file_header,
-            elevation_scans: HashMap::new(),
+            elevation_scans: BTreeMap::new(),
         }
     }
 
@@ -28,36 +28,17 @@ impl DataFile {
     }
 
     /// Scan data grouped by elevation.
-    pub fn elevation_scans(&self) -> &HashMap<u8, Vec<Message31>> {
+    pub fn elevation_scans(&self) -> &BTreeMap<u8, Vec<Message31>> {
         &self.elevation_scans
     }
 
     /// Scan data grouped by elevation.
-    pub fn as_elevation_scans(self) -> Vec<Vec<Message31>> {
-        let mut elevations = self
-            .elevation_scans
-            .into_values()
-            .collect::<Vec<Vec<Message31>>>();
-
-        elevations.sort_by(|a, b| {
-            let a = a.first();
-            let b = b.first();
-
-            match (a, b) {
-                (Some(a), Some(b)) => a
-                    .header
-                    .elev
-                    .partial_cmp(&b.header.elev)
-                    .unwrap_or(std::cmp::Ordering::Equal),
-                _ => std::cmp::Ordering::Equal,
-            }
-        });
-
-        elevations
+    pub fn as_elevation_scans(self) -> BTreeMap<u8, Vec<Message31>> {
+        self.elevation_scans
     }
 
     /// Scan data grouped by elevation.
-    pub(crate) fn elevation_scans_mut(&mut self) -> &mut HashMap<u8, Vec<Message31>> {
+    pub(crate) fn elevation_scans_mut(&mut self) -> &mut BTreeMap<u8, Vec<Message31>> {
         &mut self.elevation_scans
     }
 }
@@ -401,7 +382,7 @@ impl Message31Header {
 
 /// Introduces a data block containing data, such as VEL, REF, etc.
 #[repr(C)]
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DataBlockHeader {
     data_block_type: [u8; 1],
     data_name: [u8; 3],
@@ -419,7 +400,7 @@ impl DataBlockHeader {
 }
 
 #[repr(C)]
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct VolumeData {
     data_block_header: DataBlockHeader,
     lrtup: u16,

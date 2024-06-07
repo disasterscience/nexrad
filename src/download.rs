@@ -6,7 +6,7 @@ use aws_sdk_s3::{config::Region, types::Object, Client, Config};
 use chrono::NaiveDate;
 
 use crate::file::FileMetadata;
-use crate::result::{Error, Result};
+use anyhow::Result;
 
 const REGION: &str = "us-east-1";
 const BUCKET: &str = "noaa-nexrad-level2";
@@ -31,11 +31,11 @@ pub async fn list_files(site: &str, date: &NaiveDate) -> Result<Vec<FileMetadata
             //      site:           "KDMX"
             //      identifier:     "KDMX20230406_000215_V06"
 
-            let parts: Vec<&str> = key.split("/").collect();
+            let parts: Vec<&str> = key.split('/').collect();
 
             let date_string = parts[0..=2].join("/");
             let date = NaiveDate::parse_from_str(&date_string, "%Y/%m/%d")
-                .expect(&format!("file has valid date: \"{}\"", date_string));
+                .unwrap_or_else(|_| panic!("file has valid date: \"{}\"", date_string));
 
             let site = parts[3];
             let identifier = parts[4..].join("");
@@ -55,7 +55,7 @@ pub async fn download_file(meta: &FileMetadata) -> Result<Vec<u8>> {
     let key = format!("{}/{}/{}", formatted_date, meta.site(), meta.identifier());
 
     // Download the object from S3
-    Ok(download_object(&get_client().await, BUCKET, &key).await?)
+    download_object(&get_client().await, BUCKET, &key).await
 }
 
 /// Downloads an object from S3 and returns only its contents. This will only work for
@@ -63,8 +63,8 @@ pub async fn download_file(meta: &FileMetadata) -> Result<Vec<u8>> {
 async fn download_object(client: &Client, bucket: &str, key: &str) -> Result<Vec<u8>> {
     let operation = client.get_object().bucket(bucket).key(key);
 
-    let response = operation.send().await.map_err(|_err| Error::S3GetObjectError)?;
-    let bytes = response.body.collect().await.map_err(|_err| Error::S3StreamingError)?;
+    let response = operation.send().await?;
+    let bytes = response.body.collect().await?;
 
     Ok(bytes.to_vec())
 }
@@ -74,7 +74,7 @@ async fn download_object(client: &Client, bucket: &str, key: &str) -> Result<Vec
 async fn list_objects(client: &Client, bucket: &str, prefix: &str) -> Result<Option<Vec<Object>>> {
     let operation = client.list_objects_v2().bucket(bucket).prefix(prefix);
 
-    let response = operation.send().await.map_err(|_err| Error::S3ListObjectsError)?;
+    let response = operation.send().await?;
     Ok(response.contents().map(|objects| objects.to_vec()))
 }
 

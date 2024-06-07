@@ -5,9 +5,9 @@
 //! Usage: cargo run --example decompress -- <file>
 //!
 
+use anyhow::Result;
 use nexrad::decompress::decompress_file;
 use nexrad::file::is_compressed;
-use nexrad::result::Result;
 use std::env;
 
 #[tokio::main]

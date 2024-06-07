@@ -2,6 +2,7 @@
 //! Provides utilities like [decode_file] for decoding NEXRAD data.
 //!
 
+use std::collections::btree_map::Entry;
 use std::io::{Cursor, Read, Seek, SeekFrom};
 use std::mem::size_of;
 
@@ -12,7 +13,7 @@ use crate::model::{
     DataBlockHeader, DataFile, DataMoment, ElevationData, GenericData, Message31, Message31Header,
     MessageHeader, RadialData, VolumeData, VolumeHeaderRecord,
 };
-use crate::result::Result;
+use anyhow::Result;
 
 /// Given an uncompressed data file, decodes it and returns the decoded structure.
 pub fn decode_file(data: &Vec<u8>) -> Result<DataFile> {
@@ -102,9 +103,7 @@ fn decode_message_31(reader: &mut Cursor<&Vec<u8>>, file: &mut DataFile) -> Resu
     }
 
     let elevation_scans = file.elevation_scans_mut();
-    if let std::collections::hash_map::Entry::Vacant(e) =
-        elevation_scans.entry(message.header().elev_num())
-    {
+    if let Entry::Vacant(e) = elevation_scans.entry(message.header().elev_num()) {
         e.insert(vec![message]);
     } else {
         elevation_scans

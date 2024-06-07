@@ -2,18 +2,17 @@
 //! Provides utilities like [decompress_file] for decompressing BZIP2-compressed NEXRAD data.
 //!
 
+use crate::error::NexradError;
 use crate::file::is_compressed;
 use crate::model::VolumeHeaderRecord;
-use crate::result::{Error, Result};
+use anyhow::Result;
 use std::io::Read;
 
 /// Given a compressed data file, decompresses it and returns a new copy of the decompressed data.
 /// Will fail if the file is already decompressed.
 pub fn decompress_file(data: &[u8]) -> Result<Vec<u8>> {
     if !is_compressed(data) {
-        return Err(Error::DecompressionError(
-            "Cannot decompress uncompressed data".into(),
-        ));
+        return Err(NexradError::DecompressUnsupportedFile.into());
     };
 
     let mut decompressed_buffer = Vec::new();

@@ -11,9 +11,9 @@ use chrono::{NaiveDate, NaiveTime};
 use std::env;
 use std::io::Write;
 
+use anyhow::Result;
 use nexrad::download::{download_file, list_files};
 use nexrad::file::is_compressed;
-use nexrad::result::Result;
 
 #[tokio::main]
 async fn main() -> Result<()> {

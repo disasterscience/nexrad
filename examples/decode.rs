@@ -7,10 +7,10 @@
 
 use std::env;
 
+use anyhow::Result;
 use nexrad::decode::decode_file;
 use nexrad::decompress::decompress_file;
 use nexrad::file::is_compressed;
-use nexrad::result::Result;
 
 #[tokio::main]
 async fn main() -> Result<()> {
