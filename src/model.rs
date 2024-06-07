@@ -41,6 +41,19 @@ impl DataFile {
     pub(crate) fn elevation_scans_mut(&mut self) -> &mut BTreeMap<u8, Vec<Message31>> {
         &mut self.elevation_scans
     }
+
+    /// First available header for the specified elevation.
+    pub fn first_volume_data(&mut self) -> Option<VolumeData> {
+        let header = self
+            .elevation_scans
+            .first_entry()?
+            .get()
+            .first()?
+            .volume_data()?
+            .clone();
+
+        Some(header)
+    }
 }
 
 /// NEXRAD data volume/file header.
