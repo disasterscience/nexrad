@@ -13,6 +13,7 @@ pub mod model;
 
 // Expose more useful things
 pub use decode::DataFile;
+pub use model::Product;
 
 #[cfg(feature = "download")]
 pub mod download;
