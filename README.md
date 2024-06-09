@@ -20,16 +20,16 @@ A data file consists of binary-encoded messages containing sweep data. It is oft
 file:
 
 ```rust
-    use anyhow::Result;
-    use std::path::Path;
-    use nexrad::DataFile;
+use anyhow::Result;
+use std::path::Path;
+use nexrad::DataFile;
 
-    fn main() -> Result<()> {
-        let hurricane_harvey = Path::new("resources/KCRP20170825_235733_V06_hurricane_harvey");
-        let datafile = DataFile::new(hurricane_harvey)?;
-        println!("Decoded file with {} elevations.", datafile.elevation_scans().len());
-        Ok(())
-    }
+fn main() -> Result<()> {
+    let hurricane_harvey = Path::new("resources/KCRP20170825_235733_V06_hurricane_harvey");
+    let datafile = DataFile::new(hurricane_harvey)?;
+    println!("Decoded file with {} elevations.", datafile.elevation_scans().len());
+    Ok(())
+}
 ```
 
 ## Downloading
@@ -42,29 +42,29 @@ compressed and uploaded to AWS.
 The data is organized by site and date. Here is an example of downloading the first file for April 6, 2023 from KDMX:
 
 ```rust
-    use anyhow::Result;
-    use std::path::Path;
-    use chrono::NaiveDate;
-    use nexrad::download::{list_files, download_file};
-    use nexrad::file_metadata::is_compressed;
+use anyhow::Result;
+use std::path::Path;
+use chrono::NaiveDate;
+use nexrad::download::{list_files, download_file};
+use nexrad::file_metadata::is_compressed;
 
-    #[tokio::main]
-    async fn main() -> Result<()> {
-        let site = "KDMX";
-        let date = NaiveDate::from_ymd_opt(2023, 4, 6).expect("is valid date");
+#[tokio::main]
+async fn main() -> Result<()> {
+    let site = "KDMX";
+    let date = NaiveDate::from_ymd_opt(2023, 4, 6).expect("is valid date");
 
-        let metas = list_files(site, &date).await?;
-        if let Some(meta) = metas.first() {
-            println!("Downloading {}...", meta.identifier());
-            let downloaded_file = download_file(meta).await?;
+    let metas = list_files(site, &date).await?;
+    if let Some(meta) = metas.first() {
+        println!("Downloading {}...", meta.identifier());
+        let downloaded_file = download_file(meta).await?;
 
-            println!("Data file size (bytes): {}", downloaded_file.len());
-            println!("Data file is compressed: {}", is_compressed(&downloaded_file));
-        } else {
-            println!("No files found for the specified date/site to download.");
-        }
-        Ok(())
+        println!("Data file size (bytes): {}", downloaded_file.len());
+        println!("Data file is compressed: {}", is_compressed(&downloaded_file));
+    } else {
+        println!("No files found for the specified date/site to download.");
     }
+    Ok(())
+}
 ```
 
 In this example, `list_files` is being used to query which files are available for the specified site and date, and
@@ -76,7 +76,7 @@ decoded before the data can be inspected.
 A downloaded file can be rendered to an image using the `render` example. Here is an example usage and the result:
 
 ```bash
-    cargo run --example render KDMX20220305_233003_V06
+cargo run --example render KDMX20220305_233003_V06
 ```
 
 ## Acknowledgements
