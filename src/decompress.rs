@@ -1,18 +1,21 @@
 //!
-//! Provides utilities like [decompress_file] for decompressing BZIP2-compressed NEXRAD data.
+//! Provides utilities like [``decompress_file``] for decompressing BZIP2-compressed NEXRAD data.
 //!
 
-use crate::error::NexradError;
-use crate::file::is_compressed;
+use crate::error::Error;
+use crate::file_metadata::is_compressed;
 use crate::model::VolumeHeaderRecord;
 use anyhow::Result;
 use std::io::Read;
 
 /// Given a compressed data file, decompresses it and returns a new copy of the decompressed data.
+///
+/// # Errors
 /// Will fail if the file is already decompressed.
+#[allow(clippy::module_name_repetitions)]
 pub fn decompress_file(data: &[u8]) -> Result<Vec<u8>> {
     if !is_compressed(data) {
-        return Err(NexradError::DecompressUnsupportedFile.into());
+        return Err(Error::DecompressUnsupportedFile.into());
     };
 
     let mut decompressed_buffer = Vec::new();
@@ -33,7 +36,7 @@ pub fn decompress_file(data: &[u8]) -> Result<Vec<u8>> {
         decoder.read_to_end(&mut block_buffer)?;
 
         // Advance the reader to the next compressed block
-        reader = reader.split_at(decoder.total_in() as usize).1;
+        reader = reader.split_at(usize::try_from(decoder.total_in())?).1;
 
         // Append the decompressed block to the decompressed data
         decompressed_buffer.extend(block_buffer);

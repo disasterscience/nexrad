@@ -5,7 +5,7 @@
 use aws_sdk_s3::{config::Region, types::Object, Client, Config};
 use chrono::NaiveDate;
 
-use crate::file::FileMetadata;
+use crate::file_metadata::FileMetadata;
 use anyhow::Result;
 
 const REGION: &str = "us-east-1";

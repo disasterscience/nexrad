@@ -6,11 +6,10 @@
 //!
 
 use std::env;
+use std::path::Path;
 
 use anyhow::Result;
-use nexrad::decode::decode_file;
-use nexrad::decompress::decompress_file;
-use nexrad::file::is_compressed;
+use nexrad::DataFile;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -19,28 +18,12 @@ async fn main() -> Result<()> {
         panic!("Usage: cargo run --example decode -- <file>");
     }
 
-    let file_name = &args[1];
-    let mut file = std::fs::read(file_name).expect("file exists");
+    let file = Path::new(&args[1]);
+    let datafile = DataFile::new(file)?;
 
-    println!(
-        "Loaded {} file of size {} bytes.",
-        if is_compressed(file.as_slice()) {
-            "compressed"
-        } else {
-            "decompressed"
-        },
-        file.len()
-    );
-
-    if is_compressed(file.as_slice()) {
-        file = decompress_file(&file)?;
-        println!("Decompressed file data size (bytes): {}", file.len());
-    }
-
-    let decoded = decode_file(&file)?;
     println!(
         "Decoded file with {} elevations.",
-        decoded.elevation_scans().len()
+        datafile.elevation_scans().len()
     );
 
     Ok(())

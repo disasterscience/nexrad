@@ -4,7 +4,10 @@
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum NexradError {
+pub enum Error {
     #[error("cannot decompress uncompressed data")]
     DecompressUnsupportedFile,
+
+    #[error("unhandled product type encountered")]
+    UnhandledProduct,
 }

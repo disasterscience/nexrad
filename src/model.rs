@@ -2,59 +2,12 @@
 //! Struct definitions for decoded NEXRAD Level II data structures.
 //!
 
-use std::collections::BTreeMap;
-use std::fmt::Debug;
+use std::{fmt::Debug, str::FromStr};
 
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
-/// A decoded NEXRAD WSR-88D data file including sweep data.
-pub struct DataFile {
-    volume_header: VolumeHeaderRecord,
-    elevation_scans: BTreeMap<u8, Vec<Message31>>,
-}
-
-impl DataFile {
-    /// Create a new data file for the specified header with no sweep data.
-    pub(crate) fn new(file_header: VolumeHeaderRecord) -> Self {
-        Self {
-            volume_header: file_header,
-            elevation_scans: BTreeMap::new(),
-        }
-    }
-
-    /// The volume/file header information.
-    pub fn volume_header(&self) -> &VolumeHeaderRecord {
-        &self.volume_header
-    }
-
-    /// Scan data grouped by elevation number.
-    pub fn elevation_scans(&self) -> &BTreeMap<u8, Vec<Message31>> {
-        &self.elevation_scans
-    }
-
-    /// Scan data grouped by elevation number.
-    pub fn as_elevation_scans(self) -> BTreeMap<u8, Vec<Message31>> {
-        self.elevation_scans
-    }
-
-    /// Scan data grouped by elevation number.
-    pub(crate) fn elevation_scans_mut(&mut self) -> &mut BTreeMap<u8, Vec<Message31>> {
-        &mut self.elevation_scans
-    }
-
-    /// First available header for the specified elevation.
-    pub fn first_volume_data(&mut self) -> Option<VolumeData> {
-        let header = self
-            .elevation_scans
-            .first_entry()?
-            .get()
-            .first()?
-            .volume_data()?
-            .clone();
-
-        Some(header)
-    }
-}
+use crate::error::Error;
 
 /// NEXRAD data volume/file header.
 #[repr(C)]
@@ -238,6 +191,22 @@ impl Message31 {
         self.cfp_data.as_ref()
     }
 
+    /// Set data based on DataMoment
+    pub(crate) fn set_data_moment(&mut self, data_moment: DataMoment) {
+        match data_moment.product {
+            DataBlockProduct::Reflectivity => self.reflectivity_data = Some(data_moment),
+            DataBlockProduct::Velocity => self.velocity_data = Some(data_moment),
+            DataBlockProduct::SpectrumWidth => self.sw_data = Some(data_moment),
+            DataBlockProduct::DifferentialReflectivity => self.zdr_data = Some(data_moment),
+            DataBlockProduct::DifferentialPhase => self.phi_data = Some(data_moment),
+            DataBlockProduct::CorrelationCoefficient => self.rho_data = Some(data_moment),
+            DataBlockProduct::ClutterFilterProbability => self.cfp_data = Some(data_moment),
+            DataBlockProduct::VolumeData
+            | DataBlockProduct::ElevationData
+            | DataBlockProduct::RadialData => {}
+        }
+    }
+
     /// Set the volume data block.
     pub(crate) fn set_volume_data(&mut self, volume_data: VolumeData) {
         self.volume_data = Some(volume_data);
@@ -251,41 +220,6 @@ impl Message31 {
     /// Set the radial data block.
     pub(crate) fn set_radial_data(&mut self, radial_data: RadialData) {
         self.radial_data = Some(radial_data);
-    }
-
-    /// Set the reflectivity data block.
-    pub(crate) fn set_reflectivity_data(&mut self, reflectivity_data: DataMoment) {
-        self.reflectivity_data = Some(reflectivity_data);
-    }
-
-    /// Set the velocity data block.
-    pub(crate) fn set_velocity_data(&mut self, velocity_data: DataMoment) {
-        self.velocity_data = Some(velocity_data);
-    }
-
-    /// Set the spectrum width data block.
-    pub(crate) fn set_sw_data(&mut self, sw_data: DataMoment) {
-        self.sw_data = Some(sw_data);
-    }
-
-    /// Set the differential reflectivity data block.
-    pub(crate) fn set_zdr_data(&mut self, zdr_data: DataMoment) {
-        self.zdr_data = Some(zdr_data);
-    }
-
-    /// Set the differential phase data block.
-    pub(crate) fn set_phi_data(&mut self, phi_data: DataMoment) {
-        self.phi_data = Some(phi_data);
-    }
-
-    /// Set the correlation coefficient data block.
-    pub(crate) fn set_rho_data(&mut self, rho_data: DataMoment) {
-        self.rho_data = Some(rho_data);
-    }
-
-    /// Set the clutter filter power data block.
-    pub(crate) fn set_cfp_data(&mut self, cfp_data: DataMoment) {
-        self.cfp_data = Some(cfp_data);
     }
 }
 
@@ -409,6 +343,74 @@ impl DataBlockHeader {
     /// Data name, e.g. "REF", "VEL", etc.
     pub fn data_name(&self) -> &[u8; 3] {
         &self.data_name
+    }
+
+    /// Data block header name
+    pub fn data_block_product(&self) -> Result<DataBlockProduct> {
+        Ok(DataBlockProduct::from_str(
+            String::from_utf8_lossy(self.data_name()).as_ref(),
+        )?)
+    }
+}
+
+pub enum DataBlockProduct {
+    Reflectivity,
+    Velocity,
+    SpectrumWidth,
+    DifferentialReflectivity,
+    DifferentialPhase,
+    CorrelationCoefficient,
+    ClutterFilterProbability,
+
+    VolumeData,
+    ElevationData,
+    RadialData,
+}
+
+impl FromStr for DataBlockProduct {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "REF" => Ok(Self::Reflectivity),
+            "VEL" => Ok(Self::Velocity),
+            "SW " => Ok(Self::SpectrumWidth),
+            "ZDR" => Ok(Self::DifferentialReflectivity),
+            "PHI" => Ok(Self::DifferentialPhase),
+            "RHO" => Ok(Self::CorrelationCoefficient),
+            "CFP" => Ok(Self::ClutterFilterProbability),
+            "VOL" => Ok(Self::VolumeData),
+            "RAD" => Ok(Self::RadialData),
+            "ELV" => Ok(Self::ElevationData),
+            _ => Err(Error::UnhandledProduct),
+        }
+    }
+}
+
+pub enum Product {
+    Reflectivity,
+    Velocity,
+    SpectrumWidth,
+    DifferentialReflectivity,
+    DifferentialPhase,
+    CorrelationCoefficient,
+    ClutterFilterProbability,
+}
+
+impl FromStr for Product {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "REF" => Ok(Self::Reflectivity),
+            "VEL" => Ok(Self::Velocity),
+            "SW " => Ok(Self::SpectrumWidth),
+            "ZDR" => Ok(Self::DifferentialReflectivity),
+            "PHI" => Ok(Self::DifferentialPhase),
+            "RHO" => Ok(Self::CorrelationCoefficient),
+            "CFP" => Ok(Self::ClutterFilterProbability),
+            _ => Err(Error::UnhandledProduct),
+        }
     }
 }
 
@@ -579,13 +581,18 @@ impl RadialData {
 }
 
 pub struct DataMoment {
+    product: DataBlockProduct,
     data: GenericData,
     moment_data: Vec<u8>,
 }
 
 impl DataMoment {
-    pub(crate) fn new(data: GenericData, moment_data: Vec<u8>) -> Self {
-        Self { data, moment_data }
+    pub(crate) fn new(product: DataBlockProduct, data: GenericData, moment_data: Vec<u8>) -> Self {
+        Self {
+            product,
+            data,
+            moment_data,
+        }
     }
 
     pub fn data(&self) -> &GenericData {

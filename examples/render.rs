@@ -2,28 +2,26 @@
 //!
 //! This example loads a data file and renders it according to various options.
 //!
-use nexrad::decode::decode_file;
-use nexrad::decompress::decompress_file;
-use nexrad::file::is_compressed;
-use nexrad::model::DataFile;
+use anyhow::Result;
+use nexrad::DataFile;
 use std::env;
 use std::f32::consts::PI;
 use std::fs::File;
 use std::io::{self, Write};
+use std::path::Path;
 
 const IMAGE_SIZE: usize = 1024;
 
 const BELOW_THRESHOLD: f32 = 999.0;
 const MOMENT_FOLDED: f32 = 998.0;
 
-fn main() {
+fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
         panic!("Usage: cargo run --example decode -- <file> [product] [elevationIndex]");
     }
 
-    let file_name = &args[1];
-    let mut file = std::fs::read(file_name).expect("file exists");
+    let file = Path::new(&args[1]);
 
     let mut requested_product = "ref";
     if args.len() > 2 {
@@ -35,22 +33,7 @@ fn main() {
         requested_elevation_index = args[3].parse::<usize>().unwrap();
     }
 
-    println!(
-        "Loaded {} file of size {} bytes.",
-        if is_compressed(file.as_slice()) {
-            "compressed"
-        } else {
-            "decompressed"
-        },
-        file.len()
-    );
-
-    if is_compressed(file.as_slice()) {
-        file = decompress_file(&file).expect("decompresses file");
-        println!("Decompressed file data size (bytes): {}", file.len());
-    }
-
-    let decoded = decode_file(&file).expect("decodes file");
+    let decoded = DataFile::new(file)?;
     println!(
         "Decoded file with {} elevations.",
         decoded.elevation_scans().len()
@@ -60,7 +43,7 @@ fn main() {
         "Rendering {} product at elevation index {}.",
         requested_product, requested_elevation_index
     );
-    let rendered_image = render_ppm_image(&decoded, requested_elevation_index, requested_product);
+    let rendered_image = render_ppm_image(&decoded, requested_elevation_index, requested_product)?;
 
     let file_name = format!(
         "render_{}_{}.ppm",
@@ -68,13 +51,15 @@ fn main() {
     );
     println!("Writing rendered image to {}", file_name);
     write_ppm_image(&file_name, IMAGE_SIZE, rendered_image).expect("write file");
+
+    Ok(())
 }
 
-fn render_ppm_image(
+pub fn render_ppm_image(
     decoded: &DataFile,
     requested_elevation_index: usize,
     requested_product: &str,
-) -> Vec<(u8, u8, u8)> {
+) -> Result<Vec<(u8, u8, u8)>> {
     let mut pixel_data = vec![(0, 0, 0); IMAGE_SIZE * IMAGE_SIZE];
 
     let center = IMAGE_SIZE / 2;
@@ -161,31 +146,31 @@ fn render_ppm_image(
                 pixel_data[pixel_y * IMAGE_SIZE + pixel_x] =
                     if scaled_gate < 5.0 || scaled_gate == BELOW_THRESHOLD {
                         (0, 0, 0)
-                    } else if scaled_gate >= 5.0 && scaled_gate < 10.0 {
+                    } else if (5.0..10.0).contains(&scaled_gate) {
                         (0x40, 0xe8, 0xe3)
-                    } else if scaled_gate >= 10.0 && scaled_gate < 15.0 {
+                    } else if (10.0..15.0).contains(&scaled_gate) {
                         (0x26, 0xa4, 0xfa)
-                    } else if scaled_gate >= 15.0 && scaled_gate < 20.0 {
+                    } else if (15.0..20.0).contains(&scaled_gate) {
                         (0x00, 0x30, 0xed)
-                    } else if scaled_gate >= 20.0 && scaled_gate < 25.0 {
+                    } else if (20.0..25.0).contains(&scaled_gate) {
                         (0x49, 0xfb, 0x3e)
-                    } else if scaled_gate >= 25.0 && scaled_gate < 30.0 {
+                    } else if (25.0..30.0).contains(&scaled_gate) {
                         (0x36, 0xc2, 0x2e)
-                    } else if scaled_gate >= 30.0 && scaled_gate < 35.0 {
+                    } else if (30.0..35.0).contains(&scaled_gate) {
                         (0x27, 0x8c, 0x1e)
-                    } else if scaled_gate >= 35.0 && scaled_gate < 40.0 {
+                    } else if (35.0..40.0).contains(&scaled_gate) {
                         (0xfe, 0xf5, 0x43)
-                    } else if scaled_gate >= 40.0 && scaled_gate < 45.0 {
+                    } else if (40.0..45.0).contains(&scaled_gate) {
                         (0xeb, 0xb4, 0x33)
-                    } else if scaled_gate >= 45.0 && scaled_gate < 50.0 {
+                    } else if (45.0..50.0).contains(&scaled_gate) {
                         (0xf6, 0x95, 0x2e)
-                    } else if scaled_gate >= 50.0 && scaled_gate < 55.0 {
+                    } else if (50.0..55.0).contains(&scaled_gate) {
                         (0xf8, 0x0a, 0x26)
-                    } else if scaled_gate >= 55.0 && scaled_gate < 60.0 {
+                    } else if (55.0..60.0).contains(&scaled_gate) {
                         (0xcb, 0x05, 0x16)
-                    } else if scaled_gate >= 60.0 && scaled_gate < 65.0 {
+                    } else if (60.0..65.0).contains(&scaled_gate) {
                         (0xa9, 0x08, 0x13)
-                    } else if scaled_gate >= 65.0 && scaled_gate < 70.0 {
+                    } else if (65.0..70.0).contains(&scaled_gate) {
                         (0xee, 0x34, 0xfa)
                     } else {
                         (0xff, 0xff, 0xFF)
@@ -197,7 +182,7 @@ fn render_ppm_image(
         }
     }
 
-    pixel_data
+    Ok(pixel_data)
 }
 
 fn write_ppm_image(file: &str, width: usize, data: Vec<(u8, u8, u8)>) -> io::Result<()> {

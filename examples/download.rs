@@ -5,7 +5,7 @@
 //! Usage: cargo run --example download -- [site] [date] [time]
 //!
 
-#![cfg(all(feature = "download"))]
+#![cfg(feature = "download")]
 
 use chrono::{NaiveDate, NaiveTime};
 use std::env;
@@ -13,7 +13,7 @@ use std::io::Write;
 
 use anyhow::Result;
 use nexrad::download::{download_file, list_files};
-use nexrad::file::is_compressed;
+use nexrad::file_metadata::is_compressed;
 
 #[tokio::main]
 async fn main() -> Result<()> {
