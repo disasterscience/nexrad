@@ -1,10 +1,9 @@
-//!
+//!.panic
 //! Provides utilities like [``decode_file``] for decoding NEXRAD data.
 //!
 
 use bincode::{DefaultOptions, Options};
 use serde::de::DeserializeOwned;
-use std::collections::btree_map::Entry;
 use std::collections::BTreeMap;
 use std::io::{Cursor, Read, Seek, SeekFrom};
 use std::mem::size_of;
@@ -133,7 +132,7 @@ impl DataFile {
 
         let data_block_pointers = pointers_raw
             .chunks_exact(size_of::<u32>())
-            .map(|v| <u32>::from_be_bytes(v.try_into().unwrap()))
+            .filter_map(|v| Some(<u32>::from_be_bytes(v.try_into().ok()?)))
             .collect::<Vec<_>>();
 
         for pointer in data_block_pointers {
@@ -180,15 +179,10 @@ impl DataFile {
             }
         }
 
-        let elevation_scans = file.elevation_scans_mut();
-        if let Entry::Vacant(e) = elevation_scans.entry(message.header().elev_num()) {
-            e.insert(vec![message]);
-        } else {
-            elevation_scans
-                .get_mut(&message.header().elev_num())
-                .unwrap()
-                .push(message);
-        }
+        file.elevation_scans_mut()
+            .entry(message.header().elev_num())
+            .or_default()
+            .push(message);
 
         Ok(())
     }
