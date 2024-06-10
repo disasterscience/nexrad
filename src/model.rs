@@ -215,6 +215,22 @@ impl Message31 {
         self.cfp_data.as_ref()
     }
 
+    #[must_use]
+    pub fn get_data_moment(&self, product: &DataBlockProduct) -> Option<&DataMoment> {
+        match product {
+            DataBlockProduct::Reflectivity => self.reflectivity_data(),
+            DataBlockProduct::Velocity => self.velocity_data(),
+            DataBlockProduct::SpectrumWidth => self.sw_data(),
+            DataBlockProduct::DifferentialReflectivity => self.zdr_data(),
+            DataBlockProduct::DifferentialPhase => self.phi_data(),
+            DataBlockProduct::CorrelationCoefficient => self.rho_data(),
+            DataBlockProduct::ClutterFilterProbability => self.cfp_data(),
+            DataBlockProduct::VolumeData
+            | DataBlockProduct::ElevationData
+            | DataBlockProduct::RadialData => None,
+        }
+    }
+
     /// Set data based on `DataMoment`
     pub(crate) fn set_data_moment(&mut self, data_moment: DataMoment) {
         match data_moment.product {
@@ -432,6 +448,7 @@ impl FromStr for DataBlockProduct {
     }
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Product {
     Reflectivity,
     Velocity,
@@ -446,15 +463,29 @@ impl FromStr for Product {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "REF" => Ok(Self::Reflectivity),
-            "VEL" => Ok(Self::Velocity),
-            "SW " => Ok(Self::SpectrumWidth),
-            "ZDR" => Ok(Self::DifferentialReflectivity),
-            "PHI" => Ok(Self::DifferentialPhase),
-            "RHO" => Ok(Self::CorrelationCoefficient),
-            "CFP" => Ok(Self::ClutterFilterProbability),
+        match s.to_lowercase().as_str() {
+            "ref" => Ok(Self::Reflectivity),
+            "vel" => Ok(Self::Velocity),
+            "sw " => Ok(Self::SpectrumWidth),
+            "zdr" => Ok(Self::DifferentialReflectivity),
+            "phi" => Ok(Self::DifferentialPhase),
+            "rho" => Ok(Self::CorrelationCoefficient),
+            "cfp" => Ok(Self::ClutterFilterProbability),
             _ => Err(Error::UnhandledProduct),
+        }
+    }
+}
+
+impl From<Product> for DataBlockProduct {
+    fn from(product: Product) -> Self {
+        match product {
+            Product::Reflectivity => Self::Reflectivity,
+            Product::Velocity => Self::Velocity,
+            Product::SpectrumWidth => Self::SpectrumWidth,
+            Product::DifferentialReflectivity => Self::DifferentialReflectivity,
+            Product::DifferentialPhase => Self::DifferentialPhase,
+            Product::CorrelationCoefficient => Self::CorrelationCoefficient,
+            Product::ClutterFilterProbability => Self::ClutterFilterProbability,
         }
     }
 }
