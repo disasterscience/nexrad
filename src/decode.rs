@@ -94,7 +94,22 @@ impl DataFile {
     /// Scan data grouped by elevation number.
     #[must_use]
     pub fn as_elevation_scans(self) -> BTreeMap<u8, Vec<Message31>> {
-        self.elevation_scans
+        let scans = self.elevation_scans;
+
+        // For each scan, sort the azm values
+        scans
+            .into_iter()
+            .map(|(k, mut v)| {
+                v.sort_by(|a, b| {
+                    a.header()
+                        .azm()
+                        .partial_cmp(&b.header().azm())
+                        .unwrap_or(std::cmp::Ordering::Equal)
+                });
+
+                (k, v)
+            })
+            .collect()
     }
 
     /// Scan data grouped by elevation number.

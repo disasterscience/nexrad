@@ -117,6 +117,7 @@ impl MessageHeader {
 }
 
 /// Structured data for message type 31.
+#[derive(Clone)]
 pub struct Message31 {
     header: Message31Header,
     volume_data: Option<VolumeData>,
@@ -414,6 +415,7 @@ impl DataBlockHeader {
     }
 }
 
+#[derive(Clone)]
 pub enum DataBlockProduct {
     Reflectivity,
     Velocity,
@@ -588,7 +590,7 @@ impl VolumeData {
 }
 
 #[repr(C)]
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ElevationData {
     data_block_header: DataBlockHeader,
     lrtup: u16,
@@ -622,7 +624,7 @@ impl ElevationData {
 }
 
 #[repr(C)]
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RadialData {
     data_block_header: DataBlockHeader,
     lrtup: u16,
@@ -684,6 +686,7 @@ impl RadialData {
     }
 }
 
+#[derive(Clone)]
 pub struct DataMoment {
     product: DataBlockProduct,
     data: GenericData,
@@ -711,7 +714,7 @@ impl DataMoment {
 }
 
 #[repr(C)]
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GenericData {
     data_block_type: [u8; 1],
     data_name: [u8; 3],
