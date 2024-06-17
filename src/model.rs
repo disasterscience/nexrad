@@ -450,7 +450,7 @@ impl FromStr for DataBlockProduct {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 pub enum Product {
     Reflectivity,
     Velocity,
