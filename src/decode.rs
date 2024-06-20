@@ -33,9 +33,9 @@ impl DataFile {
 
         if is_compressed(&data) {
             let decompressed = decompress_file(&data)?;
-            Self::from_vec(&decompressed)
+            Self::from_vec(decompressed)
         } else {
-            Self::from_vec(&data)
+            Self::from_vec(data)
         }
     }
 
@@ -44,15 +44,19 @@ impl DataFile {
     /// # Errors
     /// Returns an error if the file is not a valid NEXRAD file.
     pub fn from_slice(data: &[u8]) -> Result<Self> {
-        Self::from_vec(&data.to_vec())
+        Self::from_vec(data.to_vec())
     }
 
     /// Given an uncompressed data file, decodes it and returns the decoded structure.
     ///
     /// # Errors
     /// Returns an error if the file is not a valid NEXRAD file.
-    pub fn from_vec(data: &Vec<u8>) -> Result<Self> {
-        let mut reader = Cursor::new(data);
+    pub fn from_vec(mut data: Vec<u8>) -> Result<Self> {
+        if is_compressed(&data) {
+            data = decompress_file(&data)?;
+        }
+
+        let mut reader = Cursor::new(&data);
 
         let file_header: VolumeHeaderRecord = Self::decode_file_header(&mut reader)?;
         let mut file = Self::from_header(file_header);
