@@ -466,13 +466,14 @@ impl FromStr for Product {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "ref" => Ok(Self::Reflectivity),
-            "vel" => Ok(Self::Velocity),
+            "ref" | "reflectivity" => Ok(Self::Reflectivity),
+            "vel" | "velocity" => Ok(Self::Velocity),
             "sw " => Ok(Self::SpectrumWidth),
             "zdr" => Ok(Self::DifferentialReflectivity),
             "phi" => Ok(Self::DifferentialPhase),
             "rho" => Ok(Self::CorrelationCoefficient),
             "cfp" => Ok(Self::ClutterFilterProbability),
+
             _ => Err(Error::UnhandledProduct),
         }
     }
