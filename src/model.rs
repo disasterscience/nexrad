@@ -451,6 +451,7 @@ impl FromStr for DataBlockProduct {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum Product {
     Reflectivity,
     Velocity,
