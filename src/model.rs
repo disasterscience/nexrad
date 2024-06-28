@@ -2,7 +2,10 @@
 //! Struct definitions for decoded NEXRAD Level II data structures.
 //!
 
-use std::{fmt::Debug, str::FromStr};
+use std::{
+    fmt::{Debug, Display},
+    str::FromStr,
+};
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
@@ -476,6 +479,21 @@ impl FromStr for Product {
             "cfp" => Ok(Self::ClutterFilterProbability),
 
             _ => Err(Error::UnhandledProduct),
+        }
+    }
+}
+
+// To string
+impl Display for Product {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Product::Reflectivity => write!(f, "Reflectivity"),
+            Product::Velocity => write!(f, "Velocity"),
+            Product::SpectrumWidth => write!(f, "Spectrum Width"),
+            Product::DifferentialReflectivity => write!(f, "Differential Reflectivity"),
+            Product::DifferentialPhase => write!(f, "Differential Phase"),
+            Product::CorrelationCoefficient => write!(f, "Correlation Coefficient"),
+            Product::ClutterFilterProbability => write!(f, "Clutter Filter Probability"),
         }
     }
 }
