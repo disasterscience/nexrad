@@ -6,6 +6,7 @@ use crate::error::Error;
 use crate::file_metadata::is_compressed;
 use crate::model::VolumeHeaderRecord;
 use anyhow::Result;
+use bzip2::bufread::BzDecoder;
 use std::io::Read;
 
 /// Given a compressed data file, decompresses it and returns a new copy of the decompressed data.
@@ -29,7 +30,7 @@ pub fn decompress_file(data: &[u8]) -> Result<Vec<u8>> {
         // Skip the first 4 bytes of the compressed block, which is the size of the block
         reader = reader.split_at(4).1;
 
-        let mut decoder = bzip2::read::BzDecoder::new(reader);
+        let mut decoder = BzDecoder::new(reader);
 
         // Read the decompressed block into a buffer
         let mut block_buffer = Vec::new();
