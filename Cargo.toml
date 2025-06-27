@@ -14,15 +14,13 @@ path = "examples/download.rs"
 required-features = ["download"]
 
 [features]
-default = ["download"]
-download = ["dep:aws-sdk-s3"]
+default = []
 
 [dependencies]
 chrono = { version = "0.4", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 bincode = "1"
 bzip2 = "0.4"
-aws-sdk-s3 = { version = "0.31.2", optional = true }
 thiserror = "1.0.61"
 anyhow = "1.0.86"
 
