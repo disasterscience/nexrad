@@ -20,7 +20,7 @@ default = []
 chrono = { version = "0.4", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 bincode = "1"
-bzip2 = "0.4"
+bzip2 = "0.6"
 thiserror = "1.0.61"
 anyhow = "1.0.86"
 
